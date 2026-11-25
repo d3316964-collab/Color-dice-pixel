@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COLOR DICE</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;
+ padding:25px 4%;
+ font-family:Arial,sans-serif;
+ text-align:center;
+ color:#0876df;
+ background:linear-gradient(120deg,#2698f5,#a0dcff,#278df0);
+ background-size:300% 300%;
+ animation:bg 12s infinite;
+ transition:background 1s;
+}
+@keyframes bg{
+ 0%{background-position:0% 50%}
+ 50%{background-position:100% 50%}
+ 100%{background-position:0% 50%}
+}
+body.mega-mode{
+ background:linear-gradient(135deg,#10002e,#5200a8,#061b65,#a000cf);
+ background-size:400% 400%;
+ animation:neon 5s infinite;
+}
+@keyframes neon{
+ 0%{background-position:0% 50%}
+ 50%{background-position:100% 50%}
+ 100%{background-position:0% 50%}
+}
+main{max-width:1150px;margin:auto}
+.controls{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:15px;margin:35px 0 55px;
+}
+select{
+ width:100%;height:85px;
+ background:white;color:#0876df;
+ border:5px solid #1689ef;
+ border-radius:15px;
+ font-size:clamp(14px,3vw,30px);
+ font-weight:1000;text-align:center;
+}
+.dice{
+ display:flex;
+ flex-wrap:nowrap;
+ justify-content:center;
+ align-items:center;
+ gap:clamp(6px,2vw,20px);
+ margin:30px auto 45px;
+}
+.die{
+ flex:1;min-width:0;max-width:220px;
+ aspect-ratio:1;padding:clamp(7px,1.8vw,18px);
+ background:white;border-radius:23px;
+ box-shadow:0 10px 25px #1256a966;
+ transition:box-shadow .5s;
+}
+.inner{
+ width:100%;height:100%;
+ border-radius:16px;
+ display:grid;place-items:center;
+ transition:background .5s;
+}
+.dot{
+ width:25%;aspect-ratio:1;
+ background:white;border-radius:50%;
+ box-shadow:0 3px 8px #0003;
+}
+.red{background:#ff0808}
+.orange{background:#ff9200}
+.yellow{background:#ffdc00}
+.green{background:green}
+.blue{background:#0879ff}
+.purple{background:#9028e8}
+.gray{background:linear-gradient(145deg,#999,#444)}
+body.mega-mode .die{
+ box-shadow:0 0 25px #d47aff,0 0 55px #713cff;
+}
+.id{
+ color:white;font-size:clamp(22px,5vw,48px);
+ letter-spacing:3px;margin:35px 0;
+}
+.verify{
+ width:100%;padding:30px 10px;
+ background:white;color:blue;
+ border:0;border-radius:25px;
+ font-size:clamp(22px,4vw,40px);
+ font-weight:bold;text-decoration:underline;
+ cursor:pointer;margin-bottom:35px;
+}
+button{cursor:pointer}
+.go,.mega{
+ width:100%;min-height:110px;
+ border:7px solid white;border-radius:14px;
+ font-size:clamp(27px,6vw,55px);
+ font-weight:1000;letter-spacing:2px;
+ margin:10px 0;
+}
+.go{
+ background:linear-gradient(#fff000,#ffbf00);
+ color:white;text-shadow:2px 3px #a66b16;
+}
+.mega{
+ background:linear-gradient(110deg,#8b39ff,#e34dff,#397dff);
+ color:white;text-shadow:0 3px 8px #492080;
+ box-shadow:0 0 25px #a84cff99;
+}
+button:disabled{opacity:.5}
+.history{
+ display:none;background:white;color:#0876df;
+ padding:20px;border-radius:20px;
+ margin:20px 0;text-align:left;line-height:2;
+}
+.reveal{
+ animation:reveal .8s ease;
+}
+@keyframes reveal{
+ 0%{transform:scale(.5) rotateY(180deg);filter:brightness(2)}
+ 100%{transform:scale(1) rotateY(0);filter:brightness(1)}
+}
+@media(max-width:600px){
+ body{padding:15px 3%}
+ .controls{gap:6px;margin:25px 0 40px}
+ select{height:65px;border-width:3px;padding:2px}
+ .dice{gap:6px}
+ .die{padding:7px;border-radius:15px}
+ .inner{border-radius:10px}
+ .verify{padding:23px 5px}
+ .go,.mega{min-height:85px;border-width:5px}
+}
+</style>
+</head>
+<body>
+<main>
+
+<div class="controls">
+<select id="amount" onchange="createDice()">
+<option value="1">1 DICE</option>
+<option value="2">2 DICE</option>
+<option value="3">3 DICE</option>
+<option value="4" selected>4 DICE</option>
+<option value="5">5 DICE</option>
+<option value="6">6 DICE</option>
+</select>
+
+<select id="mode">
+<option value="color">COLOR</option>
+</select>
+
+<select id="choice">
+<option value="select">SELECT</option>
+<option value="red">RED</option>
+<option value="green">GREEN</option>
+<option value="blue">BLUE</option>
+<option value="yellow">YELLOW</option>
+<option value="orange">ORANGE</option>
+<option value="purple">PURPLE</option>
+</select>
+</div>
+
+<div class="dice" id="dice"></div>
+
+<div class="id">ID: <span id="gameId"></span></div>
+
+<button class="verify" onclick="showHistory()">
+⏱️ Verify History
+</button>
+
+<div class="history" id="history">
+No rolls yet
+</div>
+
+<button class="go" id="go" onclick="rollDice(false)">
+GO AGAIN !
+</button>
+
+<button class="mega" id="mega" onclick="rollDice(true)">
+✨ MEGA ROLL ✨
+</button>
+
+</main>
+
+<script>
+const colors=[
+{name:"RED",class:"red"},
+{name:"GREEN",class:"green"},
+{name:"BLUE",class:"blue"},
+{name:"YELLOW",class:"yellow"},
+{name:"ORANGE",class:"orange"},
+{name:"PURPLE",class:"purple"}
+];
+
+let rolls=[];
+let busy=false;
+
+document.getElementById("gameId").textContent=
+Math.random().toString(36).substring(2,10).toUpperCase();
+
+function createDice(){
+ const area=document.getElementById("dice");
+ area.innerHTML="";
+
+ for(let i=0;i<Number(document.getElementById("amount").value);i++){
+  const die=document.createElement("div");
+  die.className="die";
+
+  const inner=document.createElement("div");
+  inner.className="inner gray";
+
+  die.appendChild(inner);
+  area.appendChild(die);
+ }
+}
+
+function rollDice(mega){
+ if(busy)return;
+ busy=true;
+
+ const dice=document.querySelectorAll(".die");
+ const choice=document.getElementById("choice").value;
+
+ const available=choice==="select"
+ ?colors:colors.filter(c=>c.class===choice);
+
+ const results=Array.from(dice,()=>
+ available[Math.floor(Math.random()*available.length)]
+ );
+
+ document.getElementById("go").disabled=true;
+ document.getElementById("mega").disabled=true;
+
+ function reveal(index){
+  if(index>=dice.length){
+   finish();
+   return;
+  }
+
+  const inner=dice[index].querySelector(".inner");
+  inner.className="inner "+results[index].class+" reveal";
+  inner.innerHTML='<div class="dot"></div>';
+
+  setTimeout(()=>reveal(index+1),1200);
+ }
+
+ function finish(){
+  rolls.unshift(results.map(c=>c.name));
+  rolls=rolls.slice(0,30);
+
+  document.getElementById("history").innerHTML=
+  rolls.map((r,i)=>
+  "🎲 Roll "+(i+1)+": "+r.join(" • ")
+  ).join("<br>");
+
+  setTimeout(()=>{
+   document.body.classList.remove("mega-mode");
+   busy=false;
+   document.getElementById("go").disabled=false;
+   document.getElementById("mega").disabled=false;
+  },1000);
+ }
+
+ if(mega){
+  document.body.classList.add("mega-mode");
+
+  dice.forEach(die=>{
+   const inner=die.querySelector(".inner");
+   inner.className="inner gray";
+   inner.innerHTML="";
+  });
+
+  setTimeout(()=>reveal(0),700);
+
+ }else{
+  dice.forEach((die,i)=>{
+   const inner=die.querySelector(".inner");
+   inner.className="inner "+results[i].class;
+   inner.innerHTML='<div class="dot"></div>';
+  });
+  finish();
+ }
+}
+
+function showHistory(){
+ const box=document.getElementById("history");
+ box.style.display=
+ box.style.display==="block"?"none":"block";
+}
+
+createDice();
+</script>
+</body>
+</html>
